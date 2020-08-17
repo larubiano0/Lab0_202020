@@ -31,7 +31,7 @@ import sys
 import csv
 from time import process_time 
 
-def loadCSVFile (file, lst, sep=";"):
+def loadCSVFile (file, lst=[], sep=";"):
     """
     Carga un archivo csv a una lista
     Args:
@@ -46,6 +46,16 @@ def loadCSVFile (file, lst, sep=";"):
         Borra la lista e informa al usuario
     Returns: None   
     """
+
+    archivo=open(file,"r")
+    pen = archivo.readline()
+    while(len(pen) > 0):
+        penL=pen.split(sep)
+        penL[-1]= penL[-1].replace("\n","")
+        lst.append(penL)
+        pen = archivo.readline()
+    archivo.close()
+
     del lst[:]
     print("Cargando archivo ....")
     t1_start = process_time() #tiempo inicial
@@ -62,7 +72,7 @@ def loadCSVFile (file, lst, sep=";"):
     
     t1_stop = process_time() #tiempo final
     print("Tiempo de ejecución ",t1_stop-t1_start," segundos")
-
+    return lst
 def printMenu():
     """
     Imprime el menu de opciones
@@ -88,19 +98,25 @@ def countElementsFilteredByColumn(criteria, column, lst):
         counter :: int
             la cantidad de veces ue aparece un elemento con el criterio definido
     """
+    csvdirector=loadCSVFile("Data/AllMoviesCastingRaw.csv")
+    codigos=[]
+    for i in csvdirector:
+        if i["director_name"]==column:
+            codigos.append(i["id"])
+    counter = 0
+    for i in lst:
+        for j in codigos:
+            try: 
+                if j==i["id"] and float(i["vote_average"])>=float(criteria):
+                    counter=counter+1
+            except: 
+                if j==i["""\ufeffid"""] and float(i["vote_average"])>=float(criteria):
+                    counter=counter+1
+            
     if len(lst)==0:
         print("La lista esta vacía")  
         return 0
-    else:
-        t1_start = process_time() #tiempo inicial
-        counter=0 #Cantidad de repeticiones
-        for element in lst:
-            if criteria.lower() in element[column].lower(): #filtrar por palabra clave 
-                counter+=1
-        t1_stop = process_time() #tiempo final
-        print("Tiempo de ejecución ",t1_stop-t1_start," segundos")
     return counter
-
 def countElementsByCriteria(criteria, column, lst):
     """
     Retorna la cantidad de elementos que cumplen con un criterio para una columna dada
@@ -121,13 +137,18 @@ def main():
         printMenu() #imprimir el menu de opciones en consola
         inputs =input('Seleccione una opción para continuar\n') #leer opción ingresada
         if len(inputs)>0:
+
             if int(inputs[0])==1: #opcion 1
-                loadCSVFile("Data/test.csv", lista) #llamar funcion cargar datos
+                lista=loadCSVFile("Data/AllMoviesDetailsCleaned.csv", lista) #llamar funcion cargar datos
                 print("Datos cargados, "+str(len(lista))+" elementos cargados")
+
             elif int(inputs[0])==2: #opcion 2
-                if len(lista)==0: #obtener la longitud de la lista
-                    print("La lista esta vacía")    
-                else: print("La lista tiene "+str(len(lista))+" elementos")
+
+                criterio=input("Introduzca el puntaje minimo debió recibir la pelicula: ")
+                columna=input("Introduzca el nombre del director: ")
+                contador=countElementsFilteredByColumn(criterio,columna,lista)
+                print(contador)
+
             elif int(inputs[0])==3: #opcion 3
                 criteria =input('Ingrese el criterio de búsqueda\n')
                 counter=countElementsFilteredByColumn(criteria, "nombre", lista) #filtrar una columna por criterio  
